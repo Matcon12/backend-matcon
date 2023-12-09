@@ -187,7 +187,7 @@ class GetPODetailsView(APIView):
             po_instance =Po.objects.filter(po_no=po_no)[0]
             serializer =POSerializer(po_instance)
             return Response({
-                'po_date': serializer.data['po_date'],
+                'po_date': serializer.data.get('po_date'),
                 'cust_id': serializer.data['cust_id'],
             })
         except Po.DoesNotExist:
