@@ -199,7 +199,7 @@ class GetPODetailsView(APIView):
     def get(self, request, po_no):
         try:
             # po_instance = Po.objects.filter(po_no=po_no).first()
-            po_instance =get_object_or_404(Po,po_no=po_no)
+            po_instance =get_object_or_404(Po,po_no=po_no)[0]
             print(po_instance,"po no")
 
             if po_instance:
