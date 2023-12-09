@@ -39,7 +39,7 @@ class PartMasterSerializer(serializers.ModelSerializer):
 class POSerializer(serializers.ModelSerializer):
     class Meta:
         model = Po
-    fields = ['po_date', 'unit_price', 'part_id', 'uom','cust_id']
+    fields = ['po_date','cust_id', 'unit_price', 'part_id', 'uom']
 
 
 class IPSerializer(serializers.ModelSerializer):
