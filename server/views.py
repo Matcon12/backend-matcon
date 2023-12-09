@@ -200,6 +200,7 @@ class GetPODetailsView(APIView):
                 po_instance = po_queryset[0]
                 print("1st queryset",po_instance)
                 serializer = POSerializer(po_instance)
+                print("after serializer")
                 return Response({
                     'po_date': serializer.data['po_date'],
                     'cust_id': serializer.data['cust_id'],
