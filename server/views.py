@@ -205,9 +205,9 @@ class GetPODetailsView(APIView):
                 response_data={
                 'po_date': serializer.data['po_date'],
                 'cust_id': serializer.data['cust_id'],
-            }
-            print("po data",response_data)
-            return Response(response_data)
+                }
+                print("po data",response_data)
+                return Response(response_data)
             else:
                 return Response({'error': 'PO not found'}, status=404)
         except Exception as e:
