@@ -189,7 +189,7 @@ class GetPartNameView(APIView):
 #             serializer =POSerializer(po_instance)
 #             response_data={
 #                 'po_date': serializer.data['po_date'],
-                  'cust_id': serializer.data['cust_id'],
+                  # 'cust_id': serializer.data['cust_id'],
 #             }
 #             print("po data",response_data)
 #             return Response(response_data)
