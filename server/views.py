@@ -188,10 +188,11 @@ class GetPODetailsView(APIView):
             if po_instance:
                 serializer = POSerializer(po_instance)
                 print("after serializer")
-                return Response({
+                response_data = {
                     'po_date': serializer.data.get('po_date'),
                     'cust_id': serializer.data.get('cust_id'),
-                })
+                }
+                return Response(response_data)
             else:
                 return Response({'error': 'PO not found'}, status=404)
         except Exception as e:
