@@ -187,6 +187,7 @@ class GetPODetailsView(APIView):
 
             if po_instance:
                 serializer = POSerializer(po_instance)
+                print("after serializer")
                 return Response({
                     'po_date': serializer.data.get('po_date'),
                     'cust_id': serializer.data.get('cust_id'),
