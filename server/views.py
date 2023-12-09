@@ -186,10 +186,9 @@ class GetPODetailsView(APIView):
             print("enetring try block")
             po_instance =Po.objects.filter(po_no=po_no)[0]
             print("po instnace",po_instance.po_date)
-            serializer =POSerializer(po_instance)
             return Response({
                 'po_date': po_instance.po_date,
-                'cust_id': serializer.data['cust_id'],
+                'cust_id': po_instance.cust_id,
             })
         except Po.DoesNotExist:
             return Response({'error': 'PO not found'}, status=404)
