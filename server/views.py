@@ -181,22 +181,19 @@ class GetPartNameView(APIView):
 
 
 class GetPODetailsView(APIView):
-    def get(self, request, po_no):
+       def get(self, request, po_no):
         try:
-            po_instance = Po.objects.filter(po_no=po_no).first()
-
-            if po_instance:
-                serializer = POSerializer(po_instance)
-                print("after serializer")
-                response_data = {
-                    'po_date': serializer.data.get('po_date'),
-                    'cust_id': serializer.data.get('cust_id'),
-                }
-                return Response(response_data)
-            else:
-                return Response({'error': 'PO not found'}, status=404)
-        except Exception as e:
-            return Response({'error': 'Internal Server Error'}, status=500)
+            print("enetring try block")
+            po_instance =Po.objects.filter(po_no=po_no)[0]
+            serializer =POSerializer(po_instance)
+            response_data={
+                'po_date': serializer.data['po_date'],
+                'cust_id': serializer.data['cust_id'],
+            }
+            print("po data",response_data)
+            return Response(response_data)
+        except Po.DoesNotExist:
+            return Response({'error': 'PO not found'}, status=404)
 
 
 
