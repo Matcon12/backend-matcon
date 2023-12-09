@@ -184,11 +184,11 @@ class GetPODetailsView(APIView):
     def get(self, request, po_no):
         try:
             print("Entering try block")
-            po_instance = Po.objects.filter(po_no=po_no).first()
-
-            if po_instance:
+            po_queryset = Po.objects.filter(po_no=po_no)
+            
+            if po_queryset.exists():
+                po_instance = po_queryset.first()
                 serializer = POSerializer(po_instance)
-                print("Serialized data:", serializer.data)
                 return Response({
                     'po_date': serializer.data.get('po_date'),
                     'cust_id': serializer.data.get('cust_id'),
@@ -199,6 +199,7 @@ class GetPODetailsView(APIView):
         except Exception as e:
             print("Unexpected error:", str(e))
             return Response({'error': 'Internal Server Error'}, status=500)
+
 
 
         
