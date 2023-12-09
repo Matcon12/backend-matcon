@@ -195,8 +195,10 @@ class GetPODetailsView(APIView):
     def get(self, request, po_no):
         try:
             po_queryset = Po.objects.filter(po_no=po_no)
+            print("enetring try block",po_queryset)
             if po_queryset.exists():
                 po_instance = po_queryset[0]
+                print("1st queryset",po_instance)
                 serializer = POSerializer(po_instance)
                 return Response({
                     'po_date': serializer.data['po_date'],
