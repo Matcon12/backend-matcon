@@ -185,7 +185,9 @@ class GetPODetailsView(APIView):
         try:
             print("enetring try block")
             po_instance =Po.objects.filter(po_no=po_no)[0]
+            print(po_instance,"po instance")
             serializer =POSerializer(po_instance)
+            print(serializer,"serializer")
             response_data={
                 'po_date': serializer.data['po_date'],
                 'cust_id': serializer.data['cust_id'],
