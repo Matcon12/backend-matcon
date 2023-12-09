@@ -198,8 +198,9 @@ class GetPartNameView(APIView):
 class GetPODetailsView(APIView):
     def get(self, request, po_no):
         try:
-            po_instance = Po.objects.filter(po_no=po_no).first()
-            print(po_instance,"po instance")
+            # po_instance = Po.objects.filter(po_no=po_no).first()
+            po_instance =get_object_or_404(Po,po_no=po_no)
+            print(po_instance,"po no")
 
             if po_instance:
                 serializer = POSerializer(po_instance)
