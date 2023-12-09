@@ -199,9 +199,11 @@ class GetPODetailsView(APIView):
     def get(self, request, po_no):
         try:
             po_instance = Po.objects.filter(po_no=po_no).first()
+            print(po_instance,"po instance")
 
             if po_instance:
                 serializer = POSerializer(po_instance)
+                print(serializer,"serializer")
                 response_data={
                 'po_date': serializer.data['po_date'],
                 'cust_id': serializer.data['cust_id'],
