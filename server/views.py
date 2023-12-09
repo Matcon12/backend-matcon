@@ -190,8 +190,8 @@ class GetPODetailsView(APIView):
                 po_instance = po_queryset.first()
                 serializer = POSerializer(po_instance)
                 return Response({
-                    'po_date': serializer.data.get('po_date'),
-                    'cust_id': serializer.data.get('cust_id'),
+                    'po_date': serializer.data['po_date'],
+                    'cust_id': serializer.data['cust_id'],
                 })
             else:
                 print("PO not found")
