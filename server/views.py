@@ -184,7 +184,7 @@ class GetPODetailsView(APIView):
        def get(self, request, po_no):
         try:
             print("enetring try block")
-            po_instance =get_object_or_404(Po,po_no=po_no)
+            po_instance =Po.objects.filter(po_no=po_no)[0]
             serializer =POSerializer(po_instance)
             return Response({
                 'po_date': po_instance.po_date,
