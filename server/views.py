@@ -185,7 +185,7 @@ class GetPODetailsView(APIView):
         try:
             print("enetring try block")
             po_instance =Po.objects.filter(po_no=po_no)[0]
-            print("po instnace",po_instance.po_date)
+            print("po instnace",po_instance.po_date,po_instance.cust_id)
             return Response({
                 'po_date': po_instance.po_date,
                 'cust_id': po_instance.cust_id,
