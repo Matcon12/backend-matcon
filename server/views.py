@@ -198,7 +198,8 @@ class GetPODetailsView(APIView):
             print("Entering try block", po_instance)
             if po_instance:
                 serializer = POSerializer(po_instance)
-                print("After serializer")
+                print("After serializer",serializer)
+                print(serializer.data['po_date'],serializer.data['cust_id'])
                 return Response({
                     'po_date': serializer.data['po_date'],
                     'cust_id': serializer.data['cust_id'],
