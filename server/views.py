@@ -180,20 +180,39 @@ class GetPartNameView(APIView):
         return Response({'part_name': serializer.data['part_name']})
 
 
+# class GetPODetailsView(APIView):
+#        def get(self, request, po_no):
+#         try:
+#             print("enetring try block")
+#             po_instance =Po.objects.filter(po_no=po_no)[0]
+#             print(po_instance.po_date,po_instance.cust_id,"po instance")
+#             serializer =POSerializer(po_instance)
+#             response_data={
+#                 'po_date': serializer.data['po_date'],
+                  'cust_id': serializer.data['cust_id'],
+#             }
+#             print("po data",response_data)
+#             return Response(response_data)
+#         except Po.DoesNotExist:
+#             return Response({'error': 'PO not found'}, status=404)
 class GetPODetailsView(APIView):
-       def get(self, request, po_no):
+    def get(self, request, po_no):
         try:
-            print("enetring try block")
-            po_instance =Po.objects.filter(po_no=po_no)[0]
-            print(po_instance.po_date,po_instance.cust_id,"po instance")
-            response_data={
-                'po_date': po_instance.po_date ,
-                'cust_id': po_instance.cust_id,
+            po_instance = Po.objects.filter(po_no=po_no).first()
+
+            if po_instance:
+                serializer = POSerializer(po_instance)
+                response_data={
+                'po_date': serializer.data['po_date'],
+                 'cust_id': serializer.data['cust_id'],
             }
             print("po data",response_data)
             return Response(response_data)
-        except Po.DoesNotExist:
-            return Response({'error': 'PO not found'}, status=404)
+            else:
+                return Response({'error': 'PO not found'}, status=404)
+        except Exception as e:
+            return Response({'error': 'Internal Server Error'}, status=500)
+
 
 
 
