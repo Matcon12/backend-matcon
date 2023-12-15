@@ -233,18 +233,20 @@ class GetPOSlNoDetailsInwView(APIView):
             return Response({'error': 'Inward DC not found'}, status=404)  
         
     
-class GetPODetailsView(APIView):
-       def get(self, request, po_no):
+class GetPOSlNoDetailsView(APIView):
+       def get(self, request, po_no, part_id):
         try:
             print("enetring try block")
-            po_instance =Po.objects.filter(po_no=po_no)[0]
-            serializer =POSerializer(po_instance)
-            return Response({
-                'po_date': serializer.data['po_date'],
-                'cust_id': serializer.data['cust_id'],
-            })
+            data=get_object_or_404(Po, po_no=po_no,part_id=part_id)
+            serializer =PurchaseOrderForm(data)
+            response_data={
+                'po_sl_no': serializer.data['po_sl_no'],
+                'qty': serializer.data['qty'],
+                'unit_price': serializer.data['unit_price'],
+            }
+            return Response(response_data)
         except Po.DoesNotExist:
-            return Response({'error': 'PO not found'}, status=404)
+            return Response({'error': 'PO not found'}, status=404) 
      
 
 
