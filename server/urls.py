@@ -23,6 +23,5 @@ urlpatterns =[
     path('get-inw-details/<path:grn_no>/', GetINWDetailsView.as_view(), name='get-inw-details'),
     path('get-po-sl-no-details/<path:po_no>/<path:part_id>/', GetPOSlNoDetailsView.as_view(), name='get-po-sl-no-details'),
     path('get-po-sl-no-details-inw/<path:grn_no>/<path:part_id>/', GetPOSlNoDetailsInwView.as_view(), name='get-po-sl-no-details-inw'),
-    
 ]
 
