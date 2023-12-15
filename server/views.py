@@ -217,7 +217,7 @@ class GetPODetailsView(APIView):
             return Response({'error': 'Internal Server Error'}, status=500)
 
 class GetPOSlNoDetailsInwView(APIView):
-       def get(self, request, grn_no, part_id):
+    def get(self, request, grn_no, part_id):
         try:
             print("enetring try block to get info for po sl no")
             data=get_object_or_404(InwDc, grn_no=grn_no,part_id=part_id)
