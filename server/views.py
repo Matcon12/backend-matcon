@@ -30,6 +30,7 @@ from .models import OtwDc
 from django.db.models import F, ExpressionWrapper, DateTimeField
 from django.db.models.functions import Cast
 from django.utils.timezone import make_aware
+from django.views import View
 
 from babel.numbers import format_currency
 
