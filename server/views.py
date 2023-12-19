@@ -156,19 +156,35 @@ def convert_rupees_to_words(amount):
     return result.upper()
 
 class InvoiceProcessing(APIView):    
-    # serializer_class = InvoiceForm  
     def post(self, request):
         try:
-            response = invoice_processing(request)
-            if(response == 'Nothing to be delivered'):
-                return Response(status=status.HTTP_200_OK, data = 'zero items')
-            elif response == 'grn_no does not exists':
-                return Response(status=status.HTTP_200_OK, data = 'grn_no')
-            elif response[0:8] == 'po_sl_no':
-                return Response(status=status.HTTP_200_OK,data = response)
-            elif response == 'open_po_validity':
-                return Response(status=status.HTTP_200_OK,data = 'open_po')
-            return Response(status=status.HTTP_200_OK)
+            print("entering try block for invoice processing")
+            response_data = invoice_processing(request)
+            print("Response from invoice processing:", response_data)
+
+            if response_data == 'Nothing to be delivered':
+                print("Nothing to be delivered")
+                return Response(status=status.HTTP_200_OK, data='zero items')
+            
+            elif response_data == 'grn_no does not exists':
+                print("grn_no does not exists")
+                return Response(status=status.HTTP_200_OK, data='grn_no')
+            
+            elif 'message' in response_data and 'gcn_no' in response_data:
+                print("success")
+                gcn_no = response_data['gcn_no']
+                return Response(status=status.HTTP_200_OK, data={'message': 'success', 'gcn_no': gcn_no})
+            
+            elif response_data == 'open_po_validity':
+                print("open_po_validity")
+                return Response(status=status.HTTP_200_OK, data='open_po')
+            
+            elif response_data[0:8] == 'po_sl_no':
+               return Response(status=status.HTTP_200_OK,data = response_data)
+            
+            else:
+                return Response(status=status.HTTP_200_OK)
+
         except Exception as e:
             print(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -181,21 +197,85 @@ class GetPartNameView(APIView):
         return Response({'part_name': serializer.data['part_name']})
 
 
-# class GetPODetailsView(APIView):
-#        def get(self, request, po_no):
-#         try:
-#             print("enetring try block")
-#             po_instance =Po.objects.filter(po_no=po_no)[0]
-#             print(po_instance.po_date,po_instance.cust_id,"po instance")
-#             serializer =POSerializer(po_instance)
-#             response_data={
-#                 'po_date': serializer.data['po_date'],
-                  # 'cust_id': serializer.data['cust_id'],
-#             }
-#             print("po data",response_data)
-#             return Response(response_data)
-#         except Po.DoesNotExist:
-#             return Response({'error': 'PO not found'}, status=404)
+class GetINWDetailsView(APIView):
+    def get(self, request, grn_no):
+        print("Entering API class")
+        part = get_object_or_404(InwDc, grn_no=grn_no)
+        serializer = InwardDCForm(part)
+        response_data = {
+            'grn_date': serializer.data['grn_date'],
+            'po_no': part.po_no,  
+            'cust_id': part.cust_id, 
+            'po_date':part.po_date, 
+        }
+        return Response (response_data)
+
+
+class GetPOSlNoDetailsView(APIView):
+       def get(self, request, po_no, part_id):
+        try:
+            print("enetring try block")
+            data=get_object_or_404(Po, po_no=po_no,part_id=part_id)
+            serializer =PurchaseOrderForm(data)
+            response_data={
+                'po_sl_no': serializer.data['po_sl_no'],
+                'qty': serializer.data['qty'],
+                'unit_price': serializer.data['unit_price'],
+            }
+            return Response(response_data)
+        except Po.DoesNotExist:
+            return Response({'error': 'PO not found'}, status=404) 
+        
+class GetPOSlNo(APIView):
+       def get(self, request, po_no, po_sl_no):
+        try:
+            print("enetring try block to get po sl no ")
+            data=get_object_or_404(Po, po_no=po_no,po_sl_no=po_sl_no)
+            serializer =PurchaseOrderForm(data)
+            response_data={
+                'part_id': serializer.data['part_id'],
+                'qty': serializer.data['qty'],
+                'unit_price': serializer.data['unit_price'],
+            }
+            return Response(response_data)
+        except Po.DoesNotExist:
+            return Response({'error': 'PO not found'}, status=404)         
+
+
+class GetPOSlNoInw(APIView):
+    def get(self, request, grn_no, po_sl_no):
+        try:
+            print("Entering try block to get po sl no ")
+            data = get_object_or_404(InwDc, grn_no=grn_no, po_sl_no=po_sl_no)
+            serializer = InwardDCForm(data)
+            response_data = {
+                'part_id': serializer.data['part_id'],
+                'qty_received': serializer.data['qty_received'],
+                'unit_price': serializer.data['unit_price'],
+            }
+            return Response(response_data)
+        except InwDc.DoesNotExist:
+            return Response({'error': 'Inw DC not found'}, status=404)
+
+class GetPOSlNoDetailsInwView(APIView):
+    def get(self, request, grn_no, part_id):
+        try:
+            print("enetring try block to get info for po sl no")
+            data=get_object_or_404(InwDc, grn_no=grn_no,part_id=part_id)
+            print(data,"data")
+            serializer =InwardDCForm(data)
+            response_data={
+                'po_sl_no': serializer.data['po_sl_no'],
+                'qty_received': serializer.data['qty_received'],
+                'unit_price': serializer.data['unit_price'],
+            }
+            return Response(response_data)
+        except InwDc.DoesNotExist:
+            return Response({'error': 'Inward DC not found'}, status=404)  
+        
+    
+
+        
 class GetPODetailsView(APIView):
     def get(self, request, po_no):
         try:
@@ -216,42 +296,7 @@ class GetPODetailsView(APIView):
         except Exception as e:
             return Response({'error': 'Internal Server Error'}, status=500)
 
-class GetPOSlNoDetailsInwView(APIView):
-    def get(self, request, grn_no, part_id):
-        try:
-            print("enetring try block to get info for po sl no")
-            data=get_object_or_404(InwDc, grn_no=grn_no,part_id=part_id)
-            print(data,"data")
-            serializer =InwardDCForm(data)
-            response_data={
-                'po_sl_no': serializer.data['po_sl_no'],
-                'qty_received': serializer.data['qty_received'],
-                'unit_price': serializer.data['unit_price'],
-            }
-            return Response(response_data)
-        except InwDc.DoesNotExist:
-            return Response({'error': 'Inward DC not found'}, status=404)  
-        
-    
-class GetPOSlNoDetailsView(APIView):
-       def get(self, request, po_no, part_id):
-        try:
-            print("enetring try block")
-            data=get_object_or_404(Po, po_no=po_no,part_id=part_id)
-            serializer =PurchaseOrderForm(data)
-            response_data={
-                'po_sl_no': serializer.data['po_sl_no'],
-                'qty': serializer.data['qty'],
-                'unit_price': serializer.data['unit_price'],
-            }
-            return Response(response_data)
-        except Po.DoesNotExist:
-            return Response({'error': 'PO not found'}, status=404) 
-     
-
-
-
-        
+   
 class GetInfoView(APIView):
        def get(self, request, po_no,po_sl_no):
         try:
@@ -279,18 +324,7 @@ class GetIPDetailsView(APIView):
             })
         except InwDc.DoesNotExist:
             return Response({'error': 'Inward DC not found'}, status=404)   
-class GetINWDetailsView(APIView):
-    def get(self, request, grn_no):
-        print("Entering API class")
-        part = get_object_or_404(InwDc, grn_no=grn_no)
-        serializer = InwardDCForm(part)
-        response_data = {
-            'grn_date': serializer.data['grn_date'],
-            'po_no': part.po_no,  
-            'cust_id': part.cust_id, 
-            'po_date':part.po_date, 
-        }
-        return Response (response_data)
+
     
 class GetCN(APIView):
     def get(self, request,cust_id):
@@ -337,31 +371,24 @@ class PurchaseOrderInput(APIView):
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    
+
+import os
 class InvoiceReport(APIView):
-    # def get(self, request):
-    #     # print("invoice report dates")
-    #     try:
-    #         data = invoice_report(request)
-    #         print(data,"data values")
-    #         if data == True:
-    #             return render(request, 'invoiceReports.html', {'combined_df': data})
-    #         return render(request, 'invoiceReports.html', {'combined_df': data})
-    #         # return Response(data=data, status=status.HTTP_200_OK)
-    #     except Exception as e:
-    #         print(e)
-    #         return Response(status=status.HTTP_400_BAD_REQUEST)
-    def get(self, request):
+    def post(self, request):
+        print("post request ")
         try:
             data = invoice_report(request)
             print(data, "data values")
             if data is not None:
-                return Response({'message': 'GET request received'}, status=status.HTTP_200_OK)
-            return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response({'message': 'Invoice report generated successfully', 'data': data}, status=status.HTTP_200_OK)
+            
+            return Response({'error': 'No data available'}, status=status.HTTP_404_NOT_FOUND)
+           
+
         except Exception as e:
             print(e)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
-    def post(self, request):
-        return Response({'message': 'Invoice Report is saved on your Desktop'}, status=status.HTTP_200_OK)
     
 
 def invoice_processing(request):
@@ -537,7 +564,12 @@ def invoice_processing(request):
                 insert_data.append(insert_instance) 
                     
             OtwDc.objects.bulk_create(insert_data) 
-            return('success')   
+            response_data = {
+            'message': 'success',
+            'gcn_no': gcn_num,
+                   }
+            print(type(response_data))
+            return response_data 
         else:
             print(f"The record with '{grn_no}' does not exist in the database.")
             return('grn_no does not exists')
@@ -611,10 +643,82 @@ def dc_print(request):
     except Exception as e:
         print(e)
         return "invalid otw_dc_no"
+def invoice_print(request):
+    try:
+        gcn_no = request.query_params.get('data[gcn_no]')
+        print(gcn_no)
+        odc = OtwDc.objects.filter(gcn_no=gcn_no)
+        odc1=OtwDc.objects.filter(gcn_no=gcn_no)[0] 
+        mat = odc1.mat_code
+        m = MatCompanies.objects.get(mat_code=mat)
+        r_id = odc1.receiver_id.cust_id
+        r = CustomerMaster.objects.get(cust_id=r_id)
+        c_id = odc1.consignee_id
+        c = CustomerMaster.objects.get(cust_id=c_id)
+        gr = get_object_or_404(GstRates,id=1)
+        total_qty = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_qty=Sum('qty_delivered'))['total_qty']
+        total_taxable_value =OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_taxable_value=Sum('taxable_amt'))['total_taxable_value']
+        total_cgst = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_cgst=Sum('cgst_price'))['total_cgst']
+        total_sgst = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_sgst=Sum('sgst_price'))['total_sgst']
+        total_igst = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_igst=Sum('igst_price'))['total_igst']
+        grand_total= round(float('{:.2f}'.format(total_taxable_value+total_cgst+total_sgst+total_igst)))
+        gt=format_currency(grand_total, 'INR', locale='en_IN')
+        aw = convert_rupees_to_words(grand_total) 
+        context = {
+            'odc': odc,
+            'm': m,
+            'r': r,
+            'c': c,
+            'gr': gr,
+            'odc1': odc1,
+            'amount' : aw,
+            'total_taxable_value':"{:.2f}".format(total_taxable_value),
+            'total_cgst':"{:.2f}".format(total_cgst),
+            'total_sgst':"{:.2f}".format(total_sgst),
+            'total_igst':"{:.2f}".format(total_igst),
+            'gt':gt,
+            'total_qty':total_qty,  
+        }
+        return context
+    except Exception as e:
+        print(e)
+        return "invalid otw_dc_no"
+
+
+def dc_print(request):
+    try:
+        gcn_no=request.query_params.get('data[gcn_no]')
+        odc=OtwDc.objects.filter(gcn_no=gcn_no)
+        odc1=OtwDc.objects.filter(gcn_no=gcn_no)[0]
+        c_id=odc1.consignee_id
+        c=CustomerMaster.objects.get(cust_id=c_id)
+        r_id = odc1.receiver_id.cust_id
+        r = CustomerMaster.objects.get(cust_id=r_id)
+        mat= odc1.mat_code
+        m=MatCompanies.objects.get(mat_code=mat)
+        context = {
+            'm':m,
+            'c':c,
+            'r':r,
+            'odc1':odc1,
+            'odc':odc,
+        
+        }
+        return context
+    
+    except Exception as e:
+        print(e)
+        return "invalid otw_dc_no"
+    
+from django.views.decorators.csrf import csrf_exempt   
+@csrf_exempt   
 def invoice_report(request):
+ 
+ if request.method == 'POST':
   try:  
-    start_date_str = request.query_params.get('data[start_date]')
-    end_date_str = request.query_params.get('data[end_date]')
+    data = json.loads(request.body)
+    start_date_str = data.get('start_date')
+    end_date_str = data.get('end_date')
     print(f"Start Date: {start_date_str}, End Date: {end_date_str}")
     start_datetime = datetime.strptime(start_date_str, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date_str, "%Y-%m-%d")
@@ -630,9 +734,7 @@ def invoice_report(request):
     
     print(str(result.query))
     
-    excel_writer = pd.ExcelWriter('invoiveReports.xlsx', engine='xlsxwriter')
-    
-    # for item in result:
+ 
     df = pd.DataFrame(result, columns=['gcn_no', 'gcn_date', 'qty_delivered', 'taxable_amt', 'cgst_price', 'sgst_price', 'igst_price', 'receiver_id__cust_name', 'receiver_id__cust_gst_id'])
     df = df[['receiver_id__cust_name', 'receiver_id__cust_gst_id', 'gcn_no', 'gcn_date', 'qty_delivered', 'taxable_amt', 'cgst_price', 'sgst_price', 'igst_price']]
     df.insert(0, 'Sl No', range(1, len(df) + 1))
@@ -669,19 +771,27 @@ def invoice_report(request):
     total_cgst_price = grouped['CGST Price (9%)'].sum()
     total_sgst_price = grouped['SGST Price (9%)'].sum()
     total_igst_price = grouped['IGST Price (18%)'].sum()
+    combined_df['Invoice Date'] = pd.to_datetime(combined_df['Invoice Date'], errors='coerce').dt.date
+    combined_df['Invoice Date']=pd.to_datetime(combined_df['Invoice Date'], format='%Y-%m-%d').dt.strftime('%d-%m-%Y')
+    combined_df['Invoice Date']=combined_df['Invoice Date'].astype(str)
+
 
     total_row = pd.DataFrame({
             'Sl No': 'Total',
             'Customer Name': '',
             'Customer GST Num': '',
+            'Invoice Date': '',
             'Ass.Value': total_taxable_amt,
             'CGST Price (9%)': total_cgst_price,
             'SGST Price (9%)': total_sgst_price,
             'IGST Price (18%)': total_igst_price,
             'HSN/SSC': '',
+            'Round Off':'',
         }, index=[0])
      
+
     combined_df = pd.concat([combined_df, total_row], ignore_index=True)
+    
 
     combined_df['HSN/SSC'] = combined_df['HSN/SSC'].iloc[:-1].where(combined_df['Sl No'] != len(combined_df), 9988)
    
@@ -689,10 +799,6 @@ def invoice_report(request):
 
     combined_df['Invoice Value'] = pd.to_numeric(combined_df['Invoice Value']).round()
     
-    combined_df[['Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value']] = \
-        combined_df[['Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value']].round(2)
-     # print(combined_df,"values of combined df")
-     # combined_df['Round Off'] = combined_df.apply(lambda row: row['Invoice Value'] - (row['Ass.Value'] + row['IGST Price (18%)'] + row['CGST Price (9%)'] + row['SGST Price (9%)']) if row['Sl No'] != 'Total' else None, axis=1)
     combined_df['Round Off'] = combined_df.apply(
      lambda row: float(row['Invoice Value']) - (
         float(row['Ass.Value']) +
@@ -702,33 +808,91 @@ def invoice_report(request):
      ) if row['Sl No'] != 'Total' else None,
      axis=1
      )
-     # print("values of combined df")
+    
+    combined_df[['Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value','Round Off']] = combined_df[['Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value','Round Off']].applymap('{:.2f}'.format)
     
     column_order = ['Sl No', 'Customer Name', 'Customer GST Num', 'Invoice Number', 'Invoice Date', 'Quantity',
                         'Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value','Round Off','HSN/SSC']
     combined_df = combined_df[column_order]
-    print("intermeidate df")
-    print(combined_df)
-    # desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+    print("df")
+    
 
-    # file_path = os.path.join(desktop_path, f"{os.getlogin()}_invoiceReports.xlsx")
-    # combined_df.to_excel(file_path, index=False)
-    # print(f"Excel file saved to: {file_path}")
-      
-      
-    combined_df.to_excel('invoiveReports.xlsx',index=False)
-      
-    print("Final Combined DataFrame:")
-    print(combined_df)
-    excel_writer.close()
+   
+    # Save the DataFrame to Excel file
+    with pd.ExcelWriter('invoiceReports.xlsx', engine='xlsxwriter') as excel_writer:
+      combined_df.to_excel(excel_writer, index=False)
+ 
+    json_data = combined_df.to_json(orient='records')
+    print(json_data,"json data")
+            
+    return json_data
+
     
     
-    return 
+  except Exception as e:
+        print(e)
+        return "invalid data"
+    
+    
+from django.db.models import F
+
+def po_report(request):
+  try:
+    result = Po.objects.filter(qty_sent__lte=F('qty')).values('cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent')
+    print(result, "values of result")
+
+    df = pd.DataFrame(result)
+    print(df, "df of po report")
+
+   
+    df = df.rename(columns={'cust_id': 'Customer ID', 'po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code','po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
+
+    df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
+    df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
+
+    df['PO Date'] = df['PO Date'].astype(str)
+    df['Open PO Validity'] = df['Open PO Validity'].astype(str)
+    df = df.sort_values(by='Customer ID')
+    
+    df_json = df.to_json(orient='records')
+    print(df_json)
+
+    return JsonResponse({'data': df_json})
+      
+    
     
   except Exception as e:
         print(e)
         return "invalid data"
 
+
+def inw_report(request):
+ try:
+    result = InwDc.objects.filter(qty_delivered__lte=F('qty_received')).values('cust_id','grn_no','grn_date', 'po_no', 'po_date', 'po_sl_no','part_id','part_name', 'qty_received', 'qty_delivered','qty_balance')
+    print(result, "values of result")
+
+    df = pd.DataFrame(result)
+    print(df, "df of po report")
+
+   
+    df = df.rename(columns={'cust_id': 'Customer ID','grn_no': 'Inward DC No', 'grn_date': 'Inward DC Date', 'po_no': 'PO No', 'po_date': 'PO Date', 'po_sl_no': 'PO Sl No', 'part_id': 'Part Code', 'part_name': 'Part Name', 'qty_received': 'Quantity Received', 'qty_delivered': 'Quantity Delivered', 'qty_balance': 'Quantity Balance'})
+
+    
+    df['Inward DC Date']= df['Inward DC Date'].astype(str) 
+    df['PO Date'] = df['PO Date'].astype(str)
+    df = df.sort_values(by='Customer ID')
+    
+    df_json = df.to_json(orient='records')
+    print(df_json)
+
+    return JsonResponse({'data': df_json})
+      
+    
+    
+ except Exception as e:
+        print(e)
+        return "invalid data"
+    
 
 
 
