@@ -5,7 +5,7 @@ from .views import GetPOSlNoDetailsView
 
 import sys
 
-urlpatterns =[
+urlpatterns =[ 
     path('dc-printing/', DCPrint.as_view(), name='dc-printing'),
     path('invoice-printing/', InvoicePrint.as_view(), name='invoice-printing'),
     path('invoice-processing/', InvoiceProcessing.as_view(), name='invoice-processing'),
