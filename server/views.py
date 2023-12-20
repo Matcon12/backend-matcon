@@ -422,6 +422,7 @@ def invoice_processing(request):
                     qty_sent = get_object_or_404(Po, po_no=po_no, po_sl_no=po_sl_no).qty_sent
                     rework_dc = query.rework_dc
                     grn_date = query.grn_date
+                    qty_to_be_updated_in_po=qty_to_be_delivered+qty_sent
                     open_po = get_object_or_404(Po, po_no=po_no, po_sl_no=po_sl_no).open_po
                     open_po_validity = get_object_or_404(Po, po_no=po_no, po_sl_no=po_sl_no).open_po_validity
 
@@ -430,24 +431,20 @@ def invoice_processing(request):
 
                         InwDc.objects.filter(grn_no=grn_no, po_sl_no=po_sl_no).update(qty_balance=models.F('qty_balance') - qty_to_be_delivered)
 
-                        print('open_po',open_po)
-                        if rework_dc==True or open_po==True:
+                        
+                        if rework_dc==True:
                             print('pass')
                             pass
                         else:
-                            if qty_sent <= qty:
+                            if qty_to_be_updated_in_po <= qty or open_po==True:
+                                print("Before update - qty_sent:", get_object_or_404(Po, po_no=po_no, po_sl_no=po_sl_no).qty_sent)
                                 Po.objects.filter(po_no=po_no, po_sl_no=po_sl_no).update(qty_sent=models.F('qty_sent') + qty_to_be_delivered)
+                                print("After update - qty_sent:", get_object_or_404(Po, po_no=po_no, po_sl_no=po_sl_no).qty_sent)
                             else:
                                 print("Sorry , there is nothing to be delivered ")
                                 sys.exit()
                         
                         if open_po==True:
-                        #     # open_po_date_str = open_po_validty.strftime("%Y-%m-%d")
-                        #     # grn_date_str = grn_date.strftime("%Y-%m-%d")                        
-                        #     # opn_po_dte = datetime.strptime(open_po_date_str, "%Y-%m-%d")
-                        #     # grn_dte = datetime.strptime(grn_date_str, "%Y-%m-%d")
-                        #     print(grn_date,open_po_validity)
-
                             if grn_date > open_po_validity:
                                 return 'open_po_validity'
 
