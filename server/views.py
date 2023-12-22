@@ -849,7 +849,7 @@ def po_report(request):
 
     df['PO Date'] = df['PO Date'].astype(str)
     df['Open PO Validity'] = df['Open PO Validity'].astype(str)
-    df = df.sort_values(by='Customer ID')
+    df = df.sort_values(by=['Customer ID','PO No','PO Sl No'])
     
     df_json = df.to_json(orient='records')
     print(df_json)
