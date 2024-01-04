@@ -834,45 +834,58 @@ def invoice_report(request):
 from django.db.models import F
 
 def po_report(request):
-  try:
-    print("entering po report")
-    cust_id = request.GET.get('cust_id')
-    print(cust_id,"cust id")
-    po_no = request.GET.get('po_no')
-    print("po no",po_no)
-    queryset = Po.objects.all()
-    if cust_id:
+    try:
+        print("entering po report")
+        cust_id = request.GET.get('cust_id')
+        print(cust_id, "cust id")
+        po_no = request.GET.get('po_no')
+        print("po no", po_no)
+        queryset = Po.objects.all()
+
+        if cust_id:
             queryset = queryset.filter(cust_id=cust_id)
-    if po_no:
+        if po_no:
             queryset = queryset.filter(po_no=po_no)
-    result = queryset.filter(qty_sent__lte=F('qty')).values('cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent')
-    # result = Po.objects.filter(qty_sent__lte=F('qty')).values('cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent')
-    print(result, "values of result")
 
-    df = pd.DataFrame(result)
-    print(df, "df of po report")
+        # Check if 'open_po' is a field in the model
+        if 'open_po' in [field.name for field in Po._meta.get_fields()]:
+            # If 'open_po' is True, select all columns without qty_sent__lt=F('qty')
+            result = queryset.values(
+                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent'
+            )
+        else:
+            # If 'open_po' is False, select only specific columns with qty_sent__lt=F('qty')
+            result = queryset.filter(qty_sent__lt=F('qty')).values(
+                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent'
+            )
 
-   
-    df = df.rename(columns={'cust_id': 'Customer ID', 'po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code','po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
+        print(result, "values of result")
 
-    df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
-    df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
+        df = pd.DataFrame(result)
+        print(df, "df of po report")
 
-    df['PO Date'] = df['PO Date'].astype(str)
-    df['Open PO Validity'] = df['Open PO Validity'].astype(str)
-    df = df.sort_values(by=['Customer ID','PO No','PO Sl No'])
-    
-    df_json = df.to_json(orient='records')
-    print(df_json)
+        df = df.rename(columns={'cust_id': 'Customer ID', 'po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code',
+                                'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity',
+                                'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
 
-    return JsonResponse({'data': df_json})
-      
-    
-    
-  except Exception as e:
+        if 'Open PO' in df.columns and not df[df['Open PO']].empty:
+            # If 'open_po' is True and there are rows with 'open_po' as True, set 'qty_balance' to 0
+            df['Quantity Balance'] = 0
+        else:
+            # If 'open_po' is False or there are no rows with 'open_po' as True, calculate 'qty_balance'
+            df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
+
+        df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
+
+        df['PO Date'] = df['PO Date'].astype(str)
+        df['Open PO Validity'] = df['Open PO Validity'].astype(str)
+        df = df.sort_values(by=['Customer ID', 'PO No', 'PO Sl No'])
+        df_json = df.to_json(orient='records')
+        print(df_json, "........................................................")
+        return JsonResponse({'data': df_json})
+    except Exception as e:
         print(e)
-        return "invalid data"
-
+        return JsonResponse({'error': 'invalid data'})
 
 def inw_report(request):
  try:
