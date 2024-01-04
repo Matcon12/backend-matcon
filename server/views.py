@@ -778,6 +778,8 @@ def invoice_report(request):
             'Customer Name': '',
             'Customer GST Num': '',
             'Invoice Date': '',
+            'Invoice Number': '',
+            'Quantity': '',
             'Ass.Value': total_taxable_amt,
             'CGST Price (9%)': total_cgst_price,
             'SGST Price (9%)': total_sgst_price,
