@@ -835,7 +835,18 @@ from django.db.models import F
 
 def po_report(request):
   try:
-    result = Po.objects.filter(qty_sent__lte=F('qty')).values('cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent')
+    print("entering po report")
+    cust_id = request.GET.get('cust_id')
+    print(cust_id,"cust id")
+    po_no = request.GET.get('po_no')
+    print("po no",po_no)
+    queryset = Po.objects.all()
+    if cust_id:
+            queryset = queryset.filter(cust_id=cust_id)
+    if po_no:
+            queryset = queryset.filter(po_no=po_no)
+    result = queryset.filter(qty_sent__lte=F('qty')).values('cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent')
+    # result = Po.objects.filter(qty_sent__lte=F('qty')).values('cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent')
     print(result, "values of result")
 
     df = pd.DataFrame(result)
@@ -865,9 +876,24 @@ def po_report(request):
 
 def inw_report(request):
  try:
-    result = InwDc.objects.filter(qty_delivered__lte=F('qty_received')).values('cust_id','grn_no','grn_date', 'po_no', 'po_date', 'po_sl_no','part_id','part_name', 'qty_received', 'qty_delivered','qty_balance')
+    cust_id = request.GET.get('cust_id')
+    po_no = request.GET.get('po_no')
+    grn_no = request.GET.get('grn_no')
+    queryset = InwDc.objects.filter(
+            qty_delivered__lte=F('qty_received')
+        )
+    if cust_id:
+            queryset = queryset.filter(cust_id=cust_id)
+    if po_no:
+            queryset = queryset.filter(po_no=po_no)
+    if grn_no:
+            queryset = queryset.filter(grn_no=grn_no)
+    result = queryset.values(
+            'cust_id', 'grn_no', 'grn_date', 'po_no', 'po_date',
+            'po_sl_no', 'part_id', 'part_name', 'qty_received',
+            'qty_delivered', 'qty_balance'
+        )
     print(result, "values of result")
-
     df = pd.DataFrame(result)
     print(df, "df of po report")
 
@@ -884,11 +910,14 @@ def inw_report(request):
 
     return JsonResponse({'data': df_json})
       
-    
-    
  except Exception as e:
         print(e)
         return "invalid data"
+    
+
+
+
+
     
 
 

@@ -28,6 +28,11 @@ urlpatterns =[
     path('po-sl-no/<path:po_no>/<path:po_sl_no>/', GetPOSlNo.as_view(), name='po-sl-no'),
     path('po-sl-no-inw/<path:grn_no>/<path:po_sl_no>/', GetPOSlNoInw.as_view(), name='po-sl-no'),
     path('get-po-report/', po_report,name='get-po-report'),
+    path('get-po-report/<str:cust_id>/', po_report, name='get-po-report'),
+    path('get-po-report/<str:cust_id>/<path:po_no>/', po_report, name='get-po-report'),
     path('get-inw-report/',inw_report,name='get-inw-report'),
+    path('get-inw-report/<str:cust_id>/',inw_report,name='get-inw-report'),
+    path('get-inw-report/<str:cust_id>/<path:po_no>/',inw_report,name='get-inw-report'),
+    path('get-inw-report/<str:cust_id>/<path:po_no>/<path:grn_no>/',inw_report,name='get-inw-report'),
 ]
 
