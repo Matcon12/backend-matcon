@@ -868,12 +868,13 @@ def po_report(request):
                                 'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity',
                                 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
 
-        if 'Open PO' in df.columns and not df[df['Open PO']].empty:
-            # If 'open_po' is True and there are rows with 'open_po' as True, set 'qty_balance' to 0
-            df['Quantity Balance'] = 0
+        if 'Open PO' in df.columns and not df[df['Open PO'] == 'Yes'].empty:
+    # If 'Open PO' column is present and there are rows with 'Open PO' as 'Yes', set 'Quantity Balance' to 0
+          df['Quantity Balance'] = 0
         else:
-            # If 'open_po' is False or there are no rows with 'open_po' as True, calculate 'qty_balance'
-            df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
+    # If 'Open PO' column is absent or there are no rows with 'Open PO' as 'Yes', calculate 'Quantity Balance'
+          df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
+
 
         df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
 
