@@ -809,7 +809,7 @@ def invoice_report(request):
      )
     
     combined_df[['Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value','Round Off']] = combined_df[['Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value','Round Off']].applymap('{:.2f}'.format)
-    
+    combined_df.loc[combined_df['Sl No'] == 'Total', ['Round Off', 'HSN/SSC']] = ''
     column_order = ['Sl No', 'Customer Name', 'Customer GST Num', 'Invoice Number', 'Invoice Date', 'Quantity',
                         'Ass.Value', 'IGST Price (18%)', 'CGST Price (9%)', 'SGST Price (9%)', 'Invoice Value','Round Off','HSN/SSC']
     combined_df = combined_df[column_order]
@@ -853,12 +853,12 @@ def po_report(request):
         if 'open_po' in [field.name for field in Po._meta.get_fields()]:
             # If 'open_po' is True, select all columns without qty_sent__lt=F('qty')
             result = queryset.values(
-                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent'
+                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price','qty', 'qty_sent'
             )
         else:
             # If 'open_po' is False, select only specific columns with qty_sent__lt=F('qty')
             result = queryset.filter(qty_sent__lt=F('qty')).values(
-                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'qty', 'qty_sent'
+                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity','unit_price', 'qty', 'qty_sent'
             )
 
         print(result, "values of result")
@@ -867,7 +867,7 @@ def po_report(request):
         print(df, "df of po report")
 
         df = df.rename(columns={'cust_id': 'Customer ID', 'po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code',
-                                'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity',
+                                'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'unit_price': 'Unit Price',
                                 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
 
         if 'Open PO' in df.columns and not df[df['Open PO'] == 'Yes'].empty:
@@ -879,7 +879,8 @@ def po_report(request):
 
 
         df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
-
+        df['PO Date'] = pd.to_datetime(df['PO Date'], errors='coerce').dt.date
+        df['PO Date']=pd.to_datetime(df['PO Date'], format='%Y-%m-%d').dt.strftime('%d-%m-%Y')
         df['PO Date'] = df['PO Date'].astype(str)
         df['Open PO Validity'] = df['Open PO Validity'].astype(str)
         df = df.sort_values(by=['Customer ID', 'PO No', 'PO Sl No'])
@@ -915,11 +916,14 @@ def inw_report(request):
 
    
     df = df.rename(columns={'cust_id': 'Customer ID','grn_no': 'Inward DC No', 'grn_date': 'Inward DC Date', 'po_no': 'PO No', 'po_date': 'PO Date', 'po_sl_no': 'PO Sl No', 'part_id': 'Part Code', 'part_name': 'Part Name', 'qty_received': 'Quantity Received', 'qty_delivered': 'Quantity Delivered', 'qty_balance': 'Quantity Balance'})
-
-    
+    df = df.sort_values(by=['Customer ID', 'Inward DC Date', 'Inward DC No', 'PO Sl No'])
+    df['Inward DC Date'] = pd.to_datetime(df['Inward DC Date'], errors='coerce').dt.date
+    df['Inward DC Date']=pd.to_datetime(df['Inward DC Date'], format='%Y-%m-%d').dt.strftime('%d-%m-%Y')
     df['Inward DC Date']= df['Inward DC Date'].astype(str) 
+    df['PO Date'] = pd.to_datetime(df['PO Date'], errors='coerce').dt.date
+    df['PO Date']=pd.to_datetime(df['PO Date'], format='%Y-%m-%d').dt.strftime('%d-%m-%Y')
     df['PO Date'] = df['PO Date'].astype(str)
-    df = df.sort_values(by='Customer ID')
+    
     
     df_json = df.to_json(orient='records')
     print(df_json)
