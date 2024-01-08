@@ -835,6 +835,61 @@ def invoice_report(request):
     
 from django.db.models import F
 
+# def po_report(request):
+#     try:
+#         print("entering po report")
+#         cust_id = request.GET.get('cust_id')
+#         print(cust_id, "cust id")
+#         po_no = request.GET.get('po_no')
+#         print("po no", po_no)
+#         queryset = Po.objects.all()
+
+#         if cust_id:
+#             queryset = queryset.filter(cust_id=cust_id)
+#         if po_no:
+#             queryset = queryset.filter(po_no=po_no)
+
+#         # Check if 'open_po' is a field in the model
+#         if 'open_po' in [field.name for field in Po._meta.get_fields()]:
+#             # If 'open_po' is True, select all columns without qty_sent__lt=F('qty')
+#             result = queryset.values(
+#                 'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price','qty', 'qty_sent'
+#             )
+#         else:
+#             # If 'open_po' is False, select only specific columns with qty_sent__lt=F('qty')
+#             result = queryset.filter(qty_sent__lt=F('qty')).values(
+#                 'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity','unit_price', 'qty', 'qty_sent'
+#             )
+
+#         print(result, "values of result")
+
+#         df = pd.DataFrame(result)
+#         print(df, "df of po report")
+
+#         df = df.rename(columns={'cust_id': 'Customer ID', 'po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code',
+#                                 'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'unit_price': 'Unit Price',
+#                                 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
+
+#         if 'Open PO' in df.columns and not df[df['Open PO'] == 'Yes'].empty:
+#     # If 'Open PO' column is present and there are rows with 'Open PO' as 'Yes', set 'Quantity Balance' to 0
+#           df['Quantity Balance'] = 0
+#         else:
+#     # If 'Open PO' column is absent or there are no rows with 'Open PO' as 'Yes', calculate 'Quantity Balance'
+#           df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
+
+
+#         df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
+#         df['PO Date'] = pd.to_datetime(df['PO Date'], errors='coerce').dt.date
+#         df['PO Date']=pd.to_datetime(df['PO Date'], format='%Y-%m-%d').dt.strftime('%d-%m-%Y')
+#         df['PO Date'] = df['PO Date'].astype(str)
+#         df['Open PO Validity'] = df['Open PO Validity'].astype(str)
+#         df = df.sort_values(by=['Customer ID', 'PO No', 'PO Sl No'])
+#         df_json = df.to_json(orient='records')
+#         print(df_json, "........................................................")
+#         return JsonResponse({'data': df_json})
+#     except Exception as e:
+#         print(e)
+#         return JsonResponse({'error': 'invalid data'})
 def po_report(request):
     try:
         print("entering po report")
@@ -842,12 +897,19 @@ def po_report(request):
         print(cust_id, "cust id")
         po_no = request.GET.get('po_no')
         print("po no", po_no)
+        po_date = request.GET.get('po_date')
+        print("po date", po_date)
+        po_date = datetime.strptime(po_date, '%Y-%m-%d') if po_date is not None else None
+
+        print("po date", po_date)
         queryset = Po.objects.all()
 
         if cust_id:
             queryset = queryset.filter(cust_id=cust_id)
         if po_no:
             queryset = queryset.filter(po_no=po_no)
+        if po_date:
+            queryset = queryset.filter(po_date__gte=po_date.date())
 
         # Check if 'open_po' is a field in the model
         if 'open_po' in [field.name for field in Po._meta.get_fields()]:
@@ -858,7 +920,7 @@ def po_report(request):
         else:
             # If 'open_po' is False, select only specific columns with qty_sent__lt=F('qty')
             result = queryset.filter(qty_sent__lt=F('qty')).values(
-                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity','unit_price', 'qty', 'qty_sent'
+                'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price','qty', 'qty_sent'
             )
 
         print(result, "values of result")
@@ -870,13 +932,12 @@ def po_report(request):
                                 'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'unit_price': 'Unit Price',
                                 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
 
-        if 'Open PO' in df.columns and not df[df['Open PO'] == 'Yes'].empty:
-    # If 'Open PO' column is present and there are rows with 'Open PO' as 'Yes', set 'Quantity Balance' to 0
-          df['Quantity Balance'] = 0
+        if 'Open PO' in df.columns and not df[df['Open PO']].empty:
+            # If 'open_po' is True and there are rows with 'open_po' as True, set 'qty_balance' to 0
+            df['Quantity Balance'] = 0
         else:
-    # If 'Open PO' column is absent or there are no rows with 'Open PO' as 'Yes', calculate 'Quantity Balance'
-          df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
-
+            # If 'open_po' is False or there are no rows with 'open_po' as True, calculate 'qty_balance'
+            df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
 
         df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
         df['PO Date'] = pd.to_datetime(df['PO Date'], errors='coerce').dt.date
@@ -890,7 +951,6 @@ def po_report(request):
     except Exception as e:
         print(e)
         return JsonResponse({'error': 'invalid data'})
-
 def inw_report(request):
  try:
     cust_id = request.GET.get('cust_id')
