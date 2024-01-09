@@ -46,7 +46,7 @@ class InwDc(models.Model):
     receiver_id = models.CharField(max_length=10, blank=True, null=True)
     consignee_id = models.CharField(max_length=10, blank=True, null=True)
     po_sl_no = models.IntegerField(blank=False, null=False)
-    cust_id = models.CharField(max_length=4, blank=True, null=True)
+    cust_id = models.ForeignKey(CustomerMaster, on_delete=models.CASCADE, db_column='cust_id', blank=True, null=True)
     part_id = models.CharField(max_length=20, blank=True, null=True)
     part_name = models.CharField(max_length=100, blank=True, null=True)
     qty_received = models.IntegerField(blank=True, null=True)
