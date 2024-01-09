@@ -932,12 +932,8 @@ def po_report(request):
                                 'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'unit_price': 'Unit Price',
                                 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
 
-        if 'Open PO' in df.columns and not df[df['Open PO']].empty:
-            # If 'open_po' is True and there are rows with 'open_po' as True, set 'qty_balance' to 0
-            df['Quantity Balance'] = 0
-        else:
-            # If 'open_po' is False or there are no rows with 'open_po' as True, calculate 'qty_balance'
-            df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
+       
+        df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
 
         df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
         df['PO Date'] = pd.to_datetime(df['PO Date'], errors='coerce').dt.date
