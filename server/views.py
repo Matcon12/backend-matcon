@@ -915,14 +915,14 @@ def po_report(request):
         if 'open_po' in [field.name for field in Po._meta.get_fields()]:
             # If 'open_po' is True, select all columns without qty_sent__lt=F('qty')
             result = queryset.values(
-                'cust_id', 'cust_id__cust_name','po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price', 'qty', 'qty_sent',
-                  # Include cust_name from customer_master
+                'cust_id', 'cust_id__cust_name', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price', 'qty', 'qty_sent',
+                # Include cust_name from customer_master
             )
         else:
             # If 'open_po' is False, select only specific columns with qty_sent__lt=F('qty')
             result = queryset.filter(qty_sent__lt=F('qty')).values(
-                'cust_id','cust_id__cust_name', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price', 'qty', 'qty_sent',
-                 # Include cust_name from customer_master
+                'cust_id', 'cust_id__cust_name', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price', 'qty', 'qty_sent',
+                # Include cust_name from customer_master
             )
 
         print(result, "values of result")
@@ -930,10 +930,10 @@ def po_report(request):
         df = pd.DataFrame(result)
         print(df, "df of po report")
 
-        df = df.rename(columns={'cust_id': 'Customer ID', 'cust_id__cust_name': 'Customer Name','po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code', 'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'unit_price': 'Unit Price', 'qty': 'Total Quantity', 'qty_sent': 'Delivered Quantity'})
+        df = df.rename(columns={'cust_id': 'Customer ID', 'cust_id__cust_name': 'Customer Name', 'po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code', 'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'unit_price': 'Unit Price', 'qty': 'Total Quantity', 'qty_sent': 'Delivered Quantity'})
 
         df['Balance Quantity'] = df['Total Quantity'] - df['Delivered Quantity']
-        df['Balance Quantity']  = df.apply(lambda x: 0 if x['Open PO'] else x['Balance Quantity'], axis=1)
+        df['Balance Quantity'] = df.apply(lambda x: 0 if x['Open PO'] else x['Balance Quantity'], axis=1)
 
         df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
         df['PO Date'] = pd.to_datetime(df['PO Date'], errors='coerce').dt.date
@@ -946,16 +946,41 @@ def po_report(request):
         df['Open PO Validity'] = df['Open PO Validity'].astype(str)
         df['Outstanding Value'] = df['Unit Price'] * df['Balance Quantity']
         df['Realised Value'] = df['Unit Price'] * df['Delivered Quantity']
-        df = df[['Customer ID', 'Customer Name', 'PO No', 'PO Date', 'Part Code', 'PO Sl No', 'Open PO', 'Open PO Validity',
-                 'Unit Price', 'Total Quantity', 'Delivered Quantity','Realised Value', 'Balance Quantity', 'Outstanding Value' ]]
+        total_outstanding_value = df['Outstanding Value'].sum()
+        total_realised_value = df['Realised Value'].sum()
         df = df.sort_values(by=['Customer ID', 'PO No', 'PO Sl No'])
+        # Create a new DataFrame with the totals
+        totals_df = pd.DataFrame({
+            'Customer ID': ['Total'],
+            'Customer Name': [''],  # You can customize this as needed
+            'PO No': [''],
+            'PO Date': [''],
+            'Part Code': [''],
+            'PO Sl No': [''],
+            'Open PO': [''],
+            'Open PO Validity': [''],
+            'Unit Price': [''],
+            'Total Quantity': [''],
+            'Delivered Quantity': [''],
+            'Realised Value': [total_realised_value],
+            'Balance Quantity': [''],
+            'Outstanding Value': [total_outstanding_value],
+        })
+
+        # Concatenate the original DataFrame and the totals DataFrame
+        df = pd.concat([df, totals_df], ignore_index=True)
+        
+        df_json = df.iloc[-1:].to_json(orient='records')
+        
+        df = df[['Customer ID', 'Customer Name', 'PO No', 'PO Date', 'Part Code', 'PO Sl No', 'Open PO', 'Open PO Validity',
+                 'Unit Price', 'Total Quantity', 'Delivered Quantity', 'Realised Value', 'Balance Quantity', 'Outstanding Value']]
+       
         df_json = df.to_json(orient='records')
         print(df_json, "........................................................")
         return JsonResponse({'data': df_json})
     except Exception as e:
         print(e)
         return JsonResponse({'error': 'invalid data'})
-
 
 
 
@@ -996,8 +1021,32 @@ def inw_report(request):
     df['PO Date'] = df['PO Date'].astype(str)
     df['Outstanding Value'] = df['Unit Price'] * df['Balance Quantity'] 
     df['Realised Value'] = df['Unit Price'] * df['Delivered Quantity']
-    df = df[['Customer ID', 'Customer Name', 'Inward DC No', 'Inward DC Date', 'PO No', 'PO Date', 'PO Sl No', 'Part Code', 'Part Name', 'Unit Price', 'Quantity Received', 'Delivered Quantity', 'Realised Value', 'Balance Quantity', 'Outstanding Value']]
+    total_outstanding_value = df['Outstanding Value'].sum()
+    total_realised_value = df['Realised Value'].sum()
+    totals_df = pd.DataFrame({
+            'Customer ID': ['Total'],
+            'Customer Name': [''],  # You can customize this as needed
+            'Inward DC No': [''],
+            'Inward DC Date': [''],
+            'PO No': [''],
+            'PO Date': [''],
+            'PO Sl No': [''],
+            'Part Code': [''],
+            'Part Name': [''],
+            'Unit Price': [''],
+            'Quantity Received': [''],
+            'Delivered Quantity': [''],
+            'Realised Value': [total_realised_value],
+            'Balance Quantity': [''],
+            'Outstanding Value': [total_outstanding_value]
+        })
+    df = pd.concat([df, totals_df], ignore_index=True)
 
+        # Convert the last row to JSON
+    df_json = df.iloc[-1:].to_json(orient='records')
+    df = df[['Customer ID', 'Customer Name', 'Inward DC No', 'Inward DC Date', 'PO No', 'PO Date', 'PO Sl No', 'Part Code', 'Part Name','Unit Price', 'Quantity Received', 'Delivered Quantity', 'Realised Value', 'Balance Quantity', 'Outstanding Value']]
+
+    
     
     df_json = df.to_json(orient='records')
     print(df_json)
@@ -1007,12 +1056,4 @@ def inw_report(request):
  except Exception as e:
         print(e)
         return "invalid data"
-    
-
-
-
-
-    
-
-
 
