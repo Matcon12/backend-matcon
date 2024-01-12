@@ -127,7 +127,7 @@ class Po(models.Model):
     open_po = models.BooleanField(default=False)
     open_po_validity = models.DateField(null=True, blank=True,)
     cust_id = models.ForeignKey(CustomerMaster, on_delete=models.CASCADE, db_column='cust_id', blank=True, null=True)
-    quote_ref_no = models.CharField(max_length=5, blank=True, null=True)
+    quote_ref_no = models.CharField(max_length=15, blank=True, null=True)
     receiver_id = models.CharField(max_length=4, blank=True, null=True)
     consignee_id = models.CharField(max_length=4, blank=True, null=True)
     po_sl_no = models.IntegerField()
