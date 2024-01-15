@@ -205,9 +205,11 @@ class GetINWDetailsView(APIView):
         response_data = {
             'grn_date': serializer.data['grn_date'],
             'po_no': part.po_no,  
-            'cust_id': part.cust_id, 
+            'cust_id': serializer.data['cust_id'],
             'po_date':part.po_date, 
+            'consignee_id': part.consignee_id,
         }
+        print(response_data, ".........")
         return Response (response_data)
 
 
@@ -371,7 +373,20 @@ class PurchaseOrderInput(APIView):
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
+class GetIP(APIView):
+       def get(self, request, grn_no,cust_id):
+        try:
+            print("entering try block in getip")
+            ip =get_object_or_404(InwDc,grn_no=grn_no,cust_id=cust_id)
+            print(ip,"ip")
+            serializer =InwardDCForm(ip)
+            print(serializer.data,"data")
+            return Response({
+                'po_no': serializer.data['po_no'],
+                
+            })
+        except InwDc.DoesNotExist:
+            return Response({'error': 'Inward DC not found'}, status=status.HTTP_200_OK)       
 
 import os
 class InvoiceReport(APIView):
@@ -394,6 +409,7 @@ class InvoiceReport(APIView):
 def invoice_processing(request):
     grn_no = request.data['grn_no']
     mat_code = request.data['mcc']
+    new_cons_id=request.data['new_cons_id']
     query_set = InwDc.objects.filter(grn_no=grn_no)
     print(len(query_set))
 
@@ -531,6 +547,7 @@ def invoice_processing(request):
                     
                 try:
                   receiver_instance = CustomerMaster.objects.get(cust_id=row.get('receiver_id'))
+                  consignee_id = new_cons_id if new_cons_id else data_inw[0]['consignee_id']
                 except CustomerMaster.DoesNotExist:
                   print(f"Receiver with id {row.get('receiver_id')} does not exist.")
                   continue
@@ -544,7 +561,7 @@ def invoice_processing(request):
                     po_no=row['po_no'],
                     po_date=row['po_date'],
                     receiver_id=receiver_instance,
-                    consignee_id=row['consignee_id'],
+                    consignee_id=consignee_id,
                     po_sl_no=row['po_sl_no'],
                     part_id=row['part_id'],
                     qty_delivered=row['qty_delivered'],
@@ -835,61 +852,6 @@ def invoice_report(request):
     
 from django.db.models import F
 
-# def po_report(request):
-#     try:
-#         print("entering po report")
-#         cust_id = request.GET.get('cust_id')
-#         print(cust_id, "cust id")
-#         po_no = request.GET.get('po_no')
-#         print("po no", po_no)
-#         queryset = Po.objects.all()
-
-#         if cust_id:
-#             queryset = queryset.filter(cust_id=cust_id)
-#         if po_no:
-#             queryset = queryset.filter(po_no=po_no)
-
-#         # Check if 'open_po' is a field in the model
-#         if 'open_po' in [field.name for field in Po._meta.get_fields()]:
-#             # If 'open_po' is True, select all columns without qty_sent__lt=F('qty')
-#             result = queryset.values(
-#                 'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity', 'unit_price','qty', 'qty_sent'
-#             )
-#         else:
-#             # If 'open_po' is False, select only specific columns with qty_sent__lt=F('qty')
-#             result = queryset.filter(qty_sent__lt=F('qty')).values(
-#                 'cust_id', 'po_no', 'po_date', 'part_id', 'po_sl_no', 'open_po', 'open_po_validity','unit_price', 'qty', 'qty_sent'
-#             )
-
-#         print(result, "values of result")
-
-#         df = pd.DataFrame(result)
-#         print(df, "df of po report")
-
-#         df = df.rename(columns={'cust_id': 'Customer ID', 'po_no': 'PO No', 'po_date': 'PO Date', 'part_id': 'Part Code',
-#                                 'po_sl_no': 'PO Sl No', 'open_po': 'Open PO', 'open_po_validity': 'Open PO Validity', 'unit_price': 'Unit Price',
-#                                 'qty': 'Total Quantity', 'qty_sent': 'Quantity Delivered'})
-
-#         if 'Open PO' in df.columns and not df[df['Open PO'] == 'Yes'].empty:
-#     # If 'Open PO' column is present and there are rows with 'Open PO' as 'Yes', set 'Quantity Balance' to 0
-#           df['Quantity Balance'] = 0
-#         else:
-#     # If 'Open PO' column is absent or there are no rows with 'Open PO' as 'Yes', calculate 'Quantity Balance'
-#           df['Quantity Balance'] = df['Total Quantity'] - df['Quantity Delivered']
-
-
-#         df['Open PO'] = df['Open PO'].apply(lambda x: 'Yes' if x else 'No')
-#         df['PO Date'] = pd.to_datetime(df['PO Date'], errors='coerce').dt.date
-#         df['PO Date']=pd.to_datetime(df['PO Date'], format='%Y-%m-%d').dt.strftime('%d-%m-%Y')
-#         df['PO Date'] = df['PO Date'].astype(str)
-#         df['Open PO Validity'] = df['Open PO Validity'].astype(str)
-#         df = df.sort_values(by=['Customer ID', 'PO No', 'PO Sl No'])
-#         df_json = df.to_json(orient='records')
-#         print(df_json, "........................................................")
-#         return JsonResponse({'data': df_json})
-#     except Exception as e:
-#         print(e)
-#         return JsonResponse({'error': 'invalid data'})
 def po_report(request):
     try:
         print("entering po report")
@@ -998,8 +960,7 @@ def inw_report(request):
             queryset = queryset.filter(po_no=po_no)
     if grn_no:
             queryset = queryset.filter(grn_no=grn_no)
-    # result = InwDc.objects.filter(qty_delivered__lte=F('qty_received')).values('cust_id','grn_no','grn_date', 'po_no', 'po_date', 'po_sl_no','part_id','part_name', 'qty_received', 'qty_delivered','qty_balance')
-    # 
+  
     result = queryset.values(
             'cust_id','cust_id__cust_name', 'grn_no', 'grn_date', 'po_no', 'po_date',
             'po_sl_no', 'part_id', 'part_name','unit_price', 'qty_received',
@@ -1056,4 +1017,80 @@ def inw_report(request):
  except Exception as e:
         print(e)
         return "invalid data"
+
+
+def CustReport(request):
+    try:
+       cust_id = request.GET.get('cust_id')
+       if cust_id:
+            queryset = CustomerMaster.objects.filter(cust_id=cust_id)
+       else:
+            queryset = CustomerMaster.objects.all()
+            print(queryset,"queryset")
+           
+       result = queryset.values(
+            'cust_id', 'cust_name', 'cust_city', 'cust_st_code', 'cust_st_name',
+            'cust_pin', 'cust_gst_id'
+        )
+
+       print(result, "queryset")
+       df = pd.DataFrame(result)
+       print(df, "df of po report")
+       
+       df = df.rename(columns={
+            'cust_id': 'Customer ID',
+            'cust_name': 'Customer Name',
+            'cust_city': 'City',
+            'cust_st_code': 'State Code',
+            'cust_st_name': 'State Name',
+            'cust_pin': 'PIN',
+            'cust_gst_id': 'GST ID'
+        })
+       df=df.sort_values(by=['Customer ID'])
+       
+       df_json = df.to_json(orient='records')
+       print(df_json)
+
+       return JsonResponse({'data': df_json})
+        
+    except Exception as e:
+        print(e)
+        return "invalid data"
+
+def PartReport(request):
+    try:
+        cust_id = request.GET.get('cust_id')
+        part_id = request.GET.get('part_id')
+
+        queryset = PartMaster.objects.all()
+
+        if cust_id:
+            queryset = queryset.filter(cust_id=cust_id)
+        
+        if part_id:
+            queryset = queryset.filter(part_id=part_id)
+
+        result = queryset.values(
+            'part_id', 'part_name', 'cust_id__cust_id', 'cust_id__cust_name'
+        )
+
+        df = pd.DataFrame(result)
+
+        df = df.rename(columns={
+            'part_id': 'Part ID',
+            'part_name': 'Part Name',
+            'cust_id__cust_id': 'Customer ID',
+            'cust_id__cust_name': 'Customer Name'
+        })
+
+        df = df.sort_values(by=['Customer ID','Part ID'])
+
+
+        df_json = df.to_json(orient='records')
+
+        return JsonResponse({'data': df_json})
+           
+    except Exception as e:
+        print(e)
+        return JsonResponse({'error': 'Invalid data'})
 

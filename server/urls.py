@@ -35,5 +35,11 @@ urlpatterns =[
     path('get-inw-report/<str:cust_id>/',inw_report,name='get-inw-report'),
     path('get-inw-report/<str:cust_id>/<path:po_no>/',inw_report,name='get-inw-report'),
     path('get-inw-report/<str:cust_id>/<path:po_no>/<path:grn_no>/',inw_report,name='get-inw-report'),
+    path('get-i-p/<path:grn_no>/<str:cust_id>/',GetIP.as_view(),name='get-i-p'),
+    path('custreport/',CustReport,name='custreport>'),
+    path('custreport/<str:cust_id>/',CustReport,name='custreport>'),
+    path('partreport/',PartReport,name='partreport>'),
+    path('partreport/<str:part_id>/',PartReport,name='partreport>'),
+    path('partreport/<str:cust_id>/<str:part_id>/',PartReport,name='partreport>'),
 ]
 
