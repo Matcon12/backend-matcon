@@ -657,72 +657,7 @@ def dc_print(request):
     except Exception as e:
         print(e)
         return "invalid otw_dc_no"
-def invoice_print(request):
-    try:
-        gcn_no = request.query_params.get('data[gcn_no]')
-        print(gcn_no)
-        odc = OtwDc.objects.filter(gcn_no=gcn_no)
-        odc1=OtwDc.objects.filter(gcn_no=gcn_no)[0] 
-        mat = odc1.mat_code
-        m = MatCompanies.objects.get(mat_code=mat)
-        r_id = odc1.receiver_id.cust_id
-        r = CustomerMaster.objects.get(cust_id=r_id)
-        c_id = odc1.consignee_id
-        c = CustomerMaster.objects.get(cust_id=c_id)
-        gr = get_object_or_404(GstRates,id=1)
-        total_qty = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_qty=Sum('qty_delivered'))['total_qty']
-        total_taxable_value =OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_taxable_value=Sum('taxable_amt'))['total_taxable_value']
-        total_cgst = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_cgst=Sum('cgst_price'))['total_cgst']
-        total_sgst = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_sgst=Sum('sgst_price'))['total_sgst']
-        total_igst = OtwDc.objects.filter(gcn_no=gcn_no).aggregate(total_igst=Sum('igst_price'))['total_igst']
-        grand_total= round(float('{:.2f}'.format(total_taxable_value+total_cgst+total_sgst+total_igst)))
-        gt=format_currency(grand_total, 'INR', locale='en_IN')
-        aw = convert_rupees_to_words(grand_total) 
-        context = {
-            'odc': odc,
-            'm': m,
-            'r': r,
-            'c': c,
-            'gr': gr,
-            'odc1': odc1,
-            'amount' : aw,
-            'total_taxable_value':"{:.2f}".format(total_taxable_value),
-            'total_cgst':"{:.2f}".format(total_cgst),
-            'total_sgst':"{:.2f}".format(total_sgst),
-            'total_igst':"{:.2f}".format(total_igst),
-            'gt':gt,
-            'total_qty':total_qty,  
-        }
-        return context
-    except Exception as e:
-        print(e)
-        return "invalid otw_dc_no"
-
-
-def dc_print(request):
-    try:
-        gcn_no=request.query_params.get('data[gcn_no]')
-        odc=OtwDc.objects.filter(gcn_no=gcn_no)
-        odc1=OtwDc.objects.filter(gcn_no=gcn_no)[0]
-        c_id=odc1.consignee_id
-        c=CustomerMaster.objects.get(cust_id=c_id)
-        r_id = odc1.receiver_id.cust_id
-        r = CustomerMaster.objects.get(cust_id=r_id)
-        mat= odc1.mat_code
-        m=MatCompanies.objects.get(mat_code=mat)
-        context = {
-            'm':m,
-            'c':c,
-            'r':r,
-            'odc1':odc1,
-            'odc':odc,
-        
-        }
-        return context
     
-    except Exception as e:
-        print(e)
-        return "invalid otw_dc_no"
     
 from django.views.decorators.csrf import csrf_exempt   
 @csrf_exempt   
