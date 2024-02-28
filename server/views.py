@@ -200,7 +200,9 @@ class GetPartNameView(APIView):
 class GetINWDetailsView(APIView):
     def get(self, request, grn_no):
         print("Entering API class")
-        part = get_object_or_404(InwDc, grn_no=grn_no)
+#        part = get_object_or_404(InwDc, grn_no=grn_no)
+        parts = InwDc.objects.filter(grn_no=grn_no)
+        part = parts[0]
         serializer = InwardDCForm(part)
         response_data = {
             'grn_date': serializer.data['grn_date'],
@@ -1006,7 +1008,7 @@ def PartReport(request):
             queryset = queryset.filter(part_id=part_id)
 
         result = queryset.values(
-            'part_id', 'part_name', 'cust_id__cust_id', 'cust_id__cust_name'
+            'cust_id__cust_id', 'cust_id__cust_name','part_id', 'part_name'
         )
 
         df = pd.DataFrame(result)
