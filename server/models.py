@@ -36,6 +36,7 @@ class GstStateCode(models.Model):
     class Meta:
         managed = True
         db_table = 'gst_state_code'
+        ordering = ['state_name']
 
 class InwDc(models.Model):
     grn_no = models.CharField(max_length=20)

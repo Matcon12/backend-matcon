@@ -196,6 +196,9 @@ class GetPartNameView(APIView):
         serializer = PartMasterSerializer(part)
         return Response({'part_name': serializer.data['part_name']})
 
+class GstStatesAPIView(generics.ListAPIView):
+    queryset = GstStates.objects.all()
+    serializer_class = GstStatesSerializer
 
 class GetINWDetailsView(APIView):
     def get(self, request, grn_no):

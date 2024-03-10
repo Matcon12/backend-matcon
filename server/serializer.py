@@ -46,3 +46,8 @@ class IPSerializer(serializers.ModelSerializer):
     class Meta:
         model = InwDc
         fields = ['part_name','unit_price', 'part_id']
+
+class GstStatesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GstStates
+        fields = ['state_code', 'state_name']

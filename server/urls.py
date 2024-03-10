@@ -41,5 +41,5 @@ urlpatterns =[
     path('partreport/',PartReport,name='partreport>'),
     path('partreport/<str:part_id>/',PartReport,name='partreport>'),
     path('partreport/<str:cust_id>/<str:part_id>/',PartReport,name='partreport>'),
+    path('gststates/', GstStatesAPIView.as_view(), name='gst_states'),
 ]
-
