@@ -29,7 +29,7 @@ class GstRates(models.Model):
         db_table = 'gst_rates'
 
 
-class GstStateCode(models.Model):
+class GstStates(models.Model):
     state_code = models.IntegerField(null=False,primary_key=True)
     state_name = models.CharField(max_length=70, blank=True, null=True)
 
