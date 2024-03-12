@@ -111,9 +111,9 @@ class OtwDc(models.Model):
 
 class PartMaster(models.Model):
     id = models.AutoField(primary_key=True)
-    part_id = models.CharField(max_length=20)
-    part_name = models.CharField(max_length=50, blank=True, null=True)
-    cust_id = models.ForeignKey(CustomerMaster, on_delete=models.CASCADE, db_column='cust_id', blank=True, null=True)
+    part_id = models.CharField(max_length=20, blank=False)
+    part_name = models.CharField(max_length=50, blank=False, null=False)
+    cust_id = models.ForeignKey(CustomerMaster, on_delete=models.CASCADE, db_column='cust_id', blank=False, null=False)
 
     class Meta:
         managed = True
