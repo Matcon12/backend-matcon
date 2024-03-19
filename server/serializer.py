@@ -51,3 +51,8 @@ class GstStatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = GstStates
         fields = ['state_code', 'state_name']
+
+class GstRatesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GstRates
+        fields = '__all__'
