@@ -491,10 +491,16 @@ def invoice_processing(request):
 
             if  fin_year < current_yyyy and current_mm >3:
                 fin_year=current_yyyy
-                MatCompanies.objects.filter(mat_code=mat_code).update(fin_yr=fin_year)
+                MatCompanies.objects.filter(mat_code=mat_code).update(fin_yr=fin_year, last_gcn_no = 0)
             f_year=fin_year+1
             fy=str(f_year)
             fyear=fy[2:]
+
+            # Getting gst_rates from the table
+            gst_instance = GstRates.objects.get()
+            cgst_r = float(gst_instance.cgst_rate)/100
+            sgst_r = float(gst_instance.sgst_rate)/100
+            igst_r = float(gst_instance.igst_rate)/100
 
             gcn_no = get_object_or_404(MatCompanies,mat_code='MEE').last_gcn_no
             print("Source Value:", gcn_no)
@@ -542,13 +548,13 @@ def invoice_processing(request):
                     amt = list_tax_amt[idx]
 
                 if state_code == 29:
-                    cgst_price = '{:.2f}'.format( 0.09 * amt)
-                    sgst_price = '{:.2f}'.format( 0.09 * amt)
+                    cgst_price = '{:.2f}'.format( cgst_r * amt)
+                    sgst_price = '{:.2f}'.format( sgst_r * amt)
                     igst_price = 0   
                 else:
                     cgst_price = 0  
                     sgst_price = 0  
-                    igst_price = '{:.2f}'.format( 0.18 * amt)
+                    igst_price = '{:.2f}'.format( igst_r * amt)
                     
                 try:
                   receiver_instance = CustomerMaster.objects.get(cust_id=row.get('receiver_id'))
