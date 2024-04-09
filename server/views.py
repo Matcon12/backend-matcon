@@ -416,12 +416,8 @@ def invoice_processing(request):
     mat_code = request.data['mcc']
     new_cons_id=request.data['new_cons_id']
     query_set = InwDc.objects.filter(grn_no=grn_no)
-    print(len(query_set))
 
-    if request.data['rejected'] == 1:
-        ritem = 1
-    else:
-        ritem = 0 
+    ritem = int(request.data['rejected'])
 
     try:
         if query_set.exists():
@@ -434,8 +430,7 @@ def invoice_processing(request):
                 po_sl_numbers.append(po_sl_no)
 
                 try :
-                    po_sl_no = get_object_or_404(InwDc, grn_no=grn_no, po_sl_no=po_sl_no).po_sl_no
-                
+                    po_sl_no = get_object_or_404(InwDc, grn_no=grn_no, po_sl_no=po_sl_no).po_sl_no                
                     balance_qty = query.qty_balance
                     qty_received = query.qty_received
                     po_no = query.po_no
