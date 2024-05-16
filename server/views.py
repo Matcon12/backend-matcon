@@ -447,6 +447,7 @@ def invoice_processing(request):
     # Checking the validity if Open PO 
     grn_date = df_inw.iloc[0]['grn_date']
     po_no = df_inw.iloc[0]['po_no']
+    cons_id = df_inw.iloc[0]['consignee_id']
     
     open_po = get_object_or_404(Po, cust_id = cust_id, po_no=po_no,po_sl_no=po_sl_no).open_po
     open_po_validity = get_object_or_404(Po, cust_id = cust_id, po_no=po_no,po_sl_no=po_sl_no).open_po_validity
@@ -491,7 +492,7 @@ def invoice_processing(request):
     df_inw["cust_id"] = cust_id
     df_inw["gcn_no"] = gcn_num
     df_inw["gcn_date"] = date
-    df_inw["consignee_id"] = cust_id if (new_cons_id == '') else new_cons_id
+    df_inw["consignee_id"] = cons_id if (new_cons_id == '') else new_cons_id
     df_inw["rejected_item"] = ritem
 
     # Getting the corresponding 'qty_tobe_del' for the po_sl_no
