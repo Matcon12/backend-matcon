@@ -231,42 +231,42 @@
                                 <td class="rate" style="text-align: right ;">{{record.unit_price|floatformat:2}}</td>
                                 <td class="total"style="text-align: right ;">{{record.taxable_amt|floatformat:2}}</td>
                                 <td class="crate"style="text-align: center;">
-                                  {% if c.cust_st_code == 29 %}
+                                  {% if r.cust_st_code == 29 %}
                                     {{ gr.cgst_rate }}
                                     {% else %}
                                    
                                   {% endif %}
                                 </td>
                                 <td class="camount"style="text-align: right;">
-                                  {% if c.cust_st_code == 29 %}
+                                  {% if r.cust_st_code == 29 %}
                                     {{ record.cgst_price|floatformat:2 }}
                                     {% else %}
                                    
                                   {% endif %}
                                 </td>
                                 <td class="srate"style="text-align: center;">
-                                  {% if c.cust_st_code == 29 %}
+                                  {% if r.cust_st_code == 29 %}
                                     {{ gr.sgst_rate }}
                                     {% else %}
                                     
                                   {% endif %}
                                 </td>
                                 <td  class="samount"style="text-align: right;">
-                                  {% if c.cust_st_code == 29 %}
+                                  {% if r.cust_st_code == 29 %}
                                     {{ record.sgst_price|floatformat:2}}
                                   {% else %}
                                     
                                   {% endif %}
                                 </td>
                                 <td  class="irate"style="text-align: center;">
-                                  {% if c.cust_st_code == 29 %}
+                                  {% if r.cust_st_code == 29 %}
                                     
                                   {% else %}
                                     {{ gr.igst_rate }}
                                   {% endif %}
                                 </td>
                                 <td class="iamount"style="text-align: right;">
-                                  {% if c.cust_st_code == 29 %}
+                                  {% if r.cust_st_code == 29 %}
                                    
                                   {% else %}
                                     {{ record.igst_price}} 
@@ -286,7 +286,7 @@
                             <td>  </td>
                            
                             <td style="text-align: right;">
-                              {% if c.cust_st_code == 29 %}
+                              {% if r.cust_st_code == 29 %}
                                 {{ total_cgst|floatformat:2 }}
                                 {% else %}
                                
@@ -295,7 +295,7 @@
                             <td>  </td>
                             
                             <td style="text-align: right;">
-                              {% if c.cust_st_code == 29 %}
+                              {% if r.cust_st_code == 29 %}
                                 {{ total_sgst|floatformat:2 }}
                                 {% else %}
                                 
@@ -304,7 +304,7 @@
                             <td> </td>
                            
                             <td style="text-align: right;">
-                              {% if c.cust_st_code == 29 %}
+                              {% if r.cust_st_code == 29 %}
                                
                               {% else %}
                                 {{total_igst}}
